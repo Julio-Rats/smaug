@@ -20,10 +20,10 @@ IMC = 1
 
 W_FLAGS = -Wall -Wshadow -Wformat-security -Wpointer-arith -Wcast-align -Wredundant-decls
 
-C_FLAGS = -g2 $(W_FLAGS) $(SOLARIS_FLAG) $(PROF) $(EXPORT_SYMBOLS)
+C_FLAGS = -g3 $(W_FLAGS) $(SOLARIS_FLAG) $(PROF) $(EXPORT_SYMBOLS)
 L_FLAGS = $(PROF) $(SOLARIS_LINK) -lz $(NEED_DL)
 #D_FLAGS : For the DNS Slave process. No need in linking all the extra libs for this.
-D_FLAGS = -g2 -O $(PROF) $(SOLARIS_LINK)
+D_FLAGS = -g3 -O $(PROF) $(SOLARIS_LINK)
 
 C_FILES = act_comm.c act_info.c act_move.c act_obj.c act_wiz.c ban.c boards.c \
           build.c calendar.c chess.c clans.c color.c comm.c comments.c const.c db.c deity.c \
@@ -40,7 +40,7 @@ endif
 
 O_FILES := $(patsubst %.c,o/%.o,$(C_FILES))
 
-H_FILES = $(wildcard *.h) 
+H_FILES = $(wildcard *.h)
 
 all:
 	$(MAKE) -s smaug
@@ -50,8 +50,7 @@ all:
 -include dependencies.d
 
 ifdef CYGWIN
-smaug: $(O_FILES)
-	rm -f smaug.exe
+smaug: clear $(O_FILES)
 	dlltool --export-all --output-def smaug.def $(O_FILES)
 	dlltool --dllname smaug.exe --output-exp smaug.exp --def smaug.def
 	$(CC) -o smaug.exe $(O_FILES) smaug.exp $(L_FLAGS)
@@ -64,11 +63,12 @@ smaug: $(O_FILES)
 	chmod g+w $(O_FILES)
 
 clean:
-	@rm -f o/*.o smaug.exe dependencies.d resolver.exe resolver.o *~
+	@rm -f o/*.o dependencies.d resolver.exe resolver.o *~
+clear:
+	@rm -f smaug.exe
 
 else
-smaug: $(O_FILES)
-	rm -f smaug
+smaug: clear $(O_FILES)
 	$(CC) -export-dynamic -o smaug $(O_FILES) $(L_FLAGS)
 	@echo "Generating dependency file ...";
 	@$(CC) -MM $(C_FLAGS) $(C_FILES) > dependencies.d
@@ -79,7 +79,9 @@ smaug: $(O_FILES)
 	chmod g+w $(O_FILES)
 
 clean:
-	@rm -f o/*.o smaug dependencies.d resolver resolver.o *~
+	@rm -f o/*.o dependencies.d resolver resolver.o *~
+clear:
+	@rm -f smaug
 endif
 
 dns: resolver.o
